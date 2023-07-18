@@ -8,7 +8,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { setCookie } from "nookies";
 
-export default function Home() {
+export default function Register() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -16,7 +16,7 @@ export default function Home() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    const response = await fetch('/api/login', {
+    const response = await fetch('/api/users', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -38,7 +38,7 @@ export default function Home() {
 
     setUsername('');
     setPassword('');
-    alert('Incorrect username or password');
+    alert('The username is either already taken or the username or password is missing!');
   }
 
   return (
@@ -46,7 +46,7 @@ export default function Home() {
       <Card>
         <CardHeader>
           <CardTitle>
-            Login
+            Register
           </CardTitle>
         </CardHeader>
         <form
@@ -71,15 +71,15 @@ export default function Home() {
               className="w-full"
               type="submit"
             >
-              Login
+              Register
             </Button>
             <div className="flex text-slate-600 text-sm gap-1">
-              <p>Don&apos;t have an account?</p>
+              <p>Already have an account?</p>
               <Link
                 className="font-bold text-slate-700 hover:text-slate-700/90"
-                href='/register'
+                href='/'
               >
-                Sign up
+                Sign in
               </Link>
             </div>
           </CardFooter>
