@@ -1,6 +1,6 @@
+import { ChatContent } from "@/types";
 import { PrismaClient } from "@prisma/client";
 import { NextRequest } from "next/server";
-import * as bcrypt from "bcryptjs";
 import * as jwt from 'jsonwebtoken';
 
 const secretKey = process.env.JWT_SECRET as string;
@@ -8,25 +8,34 @@ const secretKey = process.env.JWT_SECRET as string;
 const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
-  const { username, password } = await request.json();
+  const { userId, chat } = await request.json() as { userId: string, chat: ChatContent[] };
 
-  if (!username || !password) {
-    return new Response('Missing username or password!', { status: 401 });
+  if (!userId || !chat) {
+    return new Response('Missing required values!', { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({ where: { username } });
+  const createdChat = chat.map(({ options, ...rest }) => {
+    if (!options) {
+      return prisma.chat.create({
+        data: {
+          user_id: userId,
+          ...rest,
+        }
+      })
+    }
+    return prisma.chat.create({
+      data: {
+        user_id: userId,
+        ...rest,
+        options: { create: options }
+      }
+    })
 
-  if (!!user) {
-    return new Response('Username is already taken', { status: 401 });
-  }
+  });
 
-  const encryptedPassword = await bcrypt.hash(password, 10);
+  await Promise.all(createdChat);
 
-  const { id } = await prisma.user.create({ data: { username, password: encryptedPassword } });
-
-  const token = jwt.sign({ id }, secretKey, { expiresIn: '10h' });
-
-  return new Response(JSON.stringify({ username, token }));
+  return new Response("Created");
 }
 
 export async function GET(request: NextRequest) {
@@ -44,6 +53,8 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return new Response('User not found', { status: 401 });
     }
+
+    const chat = await prisma.chat.findMany({ include: { options: true } })
 
     return new Response(JSON.stringify({ username: user.username }));
   } catch (error) {

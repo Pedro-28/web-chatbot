@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { setCookie } from "nookies";
+import { useUserContext } from "@/context/users";
 
 export default function Home() {
-  const router = useRouter();
+  const { handleLoggedUser } = useUserContext();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const router = useRouter();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -25,7 +27,9 @@ export default function Home() {
     })
 
     if (response.status === 200) {
-      const { token } = await response.json();
+      const { token, username: user } = await response.json();
+
+      handleLoggedUser(user);
 
       setCookie(undefined, 'chatbot_session', token, {
         path: '/',

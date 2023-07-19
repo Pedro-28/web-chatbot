@@ -14,7 +14,32 @@ model User {
   id       String @id @default(uuid())
   username String
   password String
+  chat     Chat[]
 
   @@unique([username])
   @@map("users")
+}
+
+model Chat {
+  id                String        @id @default(uuid())
+  name              String
+  imageUrl          String
+  shortName         String
+  content           String
+  options           ChatOptions[]
+  isOptionsDisabled Boolean
+  referenceLink     String?
+
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id])
+}
+
+model ChatOptions {
+  id             String @id @default(uuid())
+  option         String
+  optionResponse String
+  referenceLink  String
+
+  chat_id String
+  chat    Chat   @relation(fields: [chat_id], references: [id])
 }

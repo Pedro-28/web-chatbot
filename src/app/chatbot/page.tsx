@@ -5,38 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useUserContext } from "@/context/users";
+import { generateFormattedDate } from "@/helpers/generateFormattedDate";
 import { getChatBotOptionsResponse, getChatBotResponse } from "@/helpers/getChatBotResponse";
+import { ChatContent } from "@/types";
 import { FormEvent, useState } from "react";
 
-interface OptionContent {
-  option: string;
-  optionResponse: string;
-  referenceLink: string;
-}
-
-interface ChatContent {
-  id: string;
-  name: string;
-  imageUrl: string;
-  shortName: string;
-  content: string | string[];
-  options: OptionContent[] | null;
-  isOptionsDisabled: boolean;
-  referenceLink?: string;
-}
-
-let ID = 0;
-
 export default function ChatBot() {
+  const { loggedUser, chat, setChat } = useUserContext();
   const [inputText, setInputText] = useState('');
-  const [chat, setChat] = useState<ChatContent[]>([]);
 
   const handleBotContent = () => {
-    const name = 'Pedro';
-    ID++
+    const lowercaseText = inputText.toLowerCase();
+
     let botContent: ChatContent = {
-      id: `${ID}`,
       name: 'ChatBot',
+      date: generateFormattedDate(),
       imageUrl: '',
       shortName: 'CB',
       content: '',
@@ -44,16 +28,31 @@ export default function ChatBot() {
       isOptionsDisabled: false,
     };
 
-    if (inputText.includes('hello')) {
+    if (lowercaseText.includes('hello')) {
       botContent = {
         ...botContent,
-        content: getChatBotResponse(1, name),
+        content: getChatBotResponse(1, loggedUser),
       };
-    } else if (inputText.includes('loan')) {
+    } else if (lowercaseText.includes('loan')) {
       botContent = {
         ...botContent,
         content: getChatBotResponse(2),
         options: getChatBotOptionsResponse(),
+      };
+    } else if (lowercaseText.includes('good')) {
+      botContent = {
+        ...botContent,
+        content: getChatBotResponse(3),
+      };
+    } else if (lowercaseText.includes('i want')) {
+      botContent = {
+        ...botContent,
+        content: getChatBotResponse(4),
+      };
+    } else if (lowercaseText.includes('goodbye')) {
+      botContent = {
+        ...botContent,
+        content: getChatBotResponse(5),
       };
     } else {
       botContent = {
@@ -67,14 +66,13 @@ export default function ChatBot() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const name = 'Pedro';
     const newChatValues: ChatContent[] = [];
-    ID++
+
     const userContent = {
-      id: `${ID}`,
-      name: name,
+      name: loggedUser,
+      date: generateFormattedDate(),
       imageUrl: 'https://github.com/Pedro-28.png',
-      shortName: 'PH',
+      shortName: loggedUser[0],
       content: inputText,
       options: null,
       isOptionsDisabled: false,
@@ -91,13 +89,10 @@ export default function ChatBot() {
     setInputText('');
   }
 
-  const handleBotOptions = (content: string, referenceLink: string, id: string) => {
-    const name = 'Pedro';
-
-    ID++
+  const handleBotOptions = (content: string, referenceLink: string, index: number) => {
     const botContent = {
-      id: `${ID}`,
       name: 'ChatBot',
+      date: generateFormattedDate(),
       imageUrl: '',
       shortName: 'CB',
       content,
@@ -108,8 +103,8 @@ export default function ChatBot() {
 
 
     setChat((prevState) => [
-      ...prevState.map((chatContent) => {
-        if (chatContent.id === id) return { ...chatContent, isOptionsDisabled: true };
+      ...prevState.map((chatContent, i) => {
+        if (i === index) return { ...chatContent, isOptionsDisabled: true };
         return chatContent
       }),
       botContent
@@ -127,7 +122,7 @@ export default function ChatBot() {
         <CardContent >
           <ScrollArea className="h-[600px] w-full pr-4">
             {
-              chat.map(({ id, shortName, imageUrl, content, options, referenceLink, isOptionsDisabled }, i) => (
+              chat.map(({ name, shortName, imageUrl, content, options, referenceLink, isOptionsDisabled }, i) => (
                 <div
                   key={`${shortName}-${i}`}
                   className="flex gap-3 text-slate-600 text-sm mb-4"
@@ -138,21 +133,24 @@ export default function ChatBot() {
                   </Avatar>
                   <div>
                     <p className="leading-relaxed">
-                      <span className="block font-bold text-slate-700">Human:</span>
+                      <span
+                        className="block font-bold text-slate-700"
+                      >
+                        {name === 'ChatBot' ? 'ChatBot' : name}
+                      </span>
                       {content}
                       {referenceLink && <a
                         className="text-primary hover:text-primary/90 underline"
                         href={referenceLink}
                       >
-                        here
+                        here.
                       </a>}
-                      .
                     </p>
                     <div className="flex flex-col gap-1">
                       {options && options.map(({ option, optionResponse, referenceLink }) => (
                         <Button
                           key={option}
-                          onClick={() => handleBotOptions(optionResponse, referenceLink, id)}
+                          onClick={() => handleBotOptions(optionResponse, referenceLink, i)}
                           // className="cursor-not-allowed"
                           disabled={isOptionsDisabled}
                           type="button"
@@ -163,30 +161,6 @@ export default function ChatBot() {
                 </div>
               ))
             }
-            {/* <div className="flex gap-3 text-slate-600 text-sm mb-4">
-              <Avatar>
-                <AvatarFallback>PH</AvatarFallback>
-                <AvatarImage src="https://github.com/Pedro-28.png" />
-              </Avatar>
-              <p className="leading-relaxed">
-                <span className="block font-bold text-slate-700">Human:</span>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquid ex excepturi consectetur deserunt
-                incidunt possimus non dolorum nihil iusto quis error repellendus saepe ad est ab eos
-                aliquam, veniam reiciendis.
-              </p>
-            </div> */}
-            {/* <div className="flex gap-3 text-slate-600 text-sm">
-              <Avatar>
-                <AvatarFallback>CB</AvatarFallback>
-                <AvatarImage src="" />
-              </Avatar>
-              <p className="leading-relaxed">
-                <span className="block font-bold text-slate-700">Chatbot:</span>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquid ex excepturi consectetur deserunt
-                incidunt possimus non dolorum nihil iusto quis error repellendus saepe ad est ab eos
-                aliquam, veniam reiciendis.
-              </p>
-            </div> */}
           </ScrollArea>
         </CardContent>
         <CardFooter >
