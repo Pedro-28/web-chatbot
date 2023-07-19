@@ -6,21 +6,37 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUserContext } from "@/context/users";
-import { generateFormattedDate } from "@/helpers/generateFormattedDate";
+import { getDate } from "@/helpers/getDate";
 import { getChatBotOptionsResponse, getChatBotResponse } from "@/helpers/getChatBotResponse";
 import { ChatContent } from "@/types";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { parseCookies } from "nookies";
+import { useRouter } from "next/navigation";
 
 export default function ChatBot() {
-  const { loggedUser, chat, setChat } = useUserContext();
+  const { loggedUser, chat, setChat, isChatFinished, setIsChatFinished } = useUserContext();
   const [inputText, setInputText] = useState('');
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isChatFinished) {
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${parseCookies()['chatbot_session']}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ chat })
+      })
+    }
+  }, [isChatFinished]);
 
   const handleBotContent = () => {
     const lowercaseText = inputText.toLowerCase();
 
     let botContent: ChatContent = {
       name: 'ChatBot',
-      date: generateFormattedDate(),
+      date: getDate(),
       imageUrl: '',
       shortName: 'CB',
       content: '',
@@ -39,17 +55,18 @@ export default function ChatBot() {
         content: getChatBotResponse(2),
         options: getChatBotOptionsResponse(),
       };
-    } else if (lowercaseText.includes('good')) {
+    } else if (lowercaseText.includes('goodbye')) {
       botContent = {
         ...botContent,
         content: getChatBotResponse(3),
       };
+      setIsChatFinished(true);
     } else if (lowercaseText.includes('i want')) {
       botContent = {
         ...botContent,
         content: getChatBotResponse(4),
       };
-    } else if (lowercaseText.includes('goodbye')) {
+    } else if (lowercaseText.includes('good')) {
       botContent = {
         ...botContent,
         content: getChatBotResponse(5),
@@ -70,8 +87,8 @@ export default function ChatBot() {
 
     const userContent = {
       name: loggedUser,
-      date: generateFormattedDate(),
-      imageUrl: 'https://github.com/Pedro-28.png',
+      date: getDate(),
+      imageUrl: '',
       shortName: loggedUser[0],
       content: inputText,
       options: null,
@@ -82,7 +99,6 @@ export default function ChatBot() {
 
 
     newChatValues.push(userContent);
-
     newChatValues.push(botContent);
 
     setChat((prevState) => [...prevState, ...newChatValues]);
@@ -92,7 +108,7 @@ export default function ChatBot() {
   const handleBotOptions = (content: string, referenceLink: string, index: number) => {
     const botContent = {
       name: 'ChatBot',
-      date: generateFormattedDate(),
+      date: getDate(),
       imageUrl: '',
       shortName: 'CB',
       content,
@@ -112,12 +128,25 @@ export default function ChatBot() {
     setInputText('');
   }
 
+  const handleChatStart = () => {
+    setChat([]);
+    setIsChatFinished(false);
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-50 justify-center items-center">
       <Card className="w-[440px] grid grid-rows-[min-content_1fr_min-content]">
-        <CardHeader>
-          <CardTitle>ChatBot</CardTitle>
-          <CardDescription>chatbot</CardDescription>
+        <CardHeader className="flex flex-row justify-between">
+          <div>
+            <CardTitle>ChatBot</CardTitle>
+            <CardDescription>chatbot</CardDescription>
+          </div>
+          <Button
+            disabled={!isChatFinished}
+            onClick={() => router.push('/export_conversations')}
+          >
+            Export chat
+          </Button>
         </CardHeader>
         <CardContent >
           <ScrollArea className="h-[600px] w-full pr-4">
@@ -151,7 +180,6 @@ export default function ChatBot() {
                         <Button
                           key={option}
                           onClick={() => handleBotOptions(optionResponse, referenceLink, i)}
-                          // className="cursor-not-allowed"
                           disabled={isOptionsDisabled}
                           type="button"
                         >{option}</Button>
@@ -164,17 +192,29 @@ export default function ChatBot() {
           </ScrollArea>
         </CardContent>
         <CardFooter >
-          <form
-            className="w-full flex gap-2"
-            onSubmit={handleSubmit}
-          >
-            <Input
-              onChange={({ target }) => setInputText(target.value)}
-              value={inputText}
-              placeholder="How can I help you?"
-            />
-            <Button type="submit">Send</Button>
-          </form>
+          {
+            isChatFinished ? (
+              <Button
+                className="w-full"
+                onClick={handleChatStart}
+                type="button"
+              >
+                new chat
+              </Button>
+            ) : (
+              <form
+                className="w-full flex gap-2"
+                onSubmit={handleSubmit}
+              >
+                <Input
+                  onChange={({ target }) => setInputText(target.value)}
+                  value={inputText}
+                  placeholder="How can I help you?"
+                />
+                <Button type="submit">Send</Button>
+              </form>
+            )
+          }
         </CardFooter>
       </Card>
     </div>

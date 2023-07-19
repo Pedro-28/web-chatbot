@@ -7,7 +7,7 @@ export interface OptionContent {
 export interface ChatContent {
   id?: string;
   name: string;
-  date: string;
+  date: Date;
   imageUrl: string;
   shortName: string;
   content: string;

@@ -8,6 +8,8 @@ interface UserContextProps {
   handleLoggedUser: (user: string) => void,
   chat: ChatContent[],
   setChat: (chatData: SetStateAction<ChatContent[]>) => void
+  isChatFinished: boolean;
+  setIsChatFinished: (bool: SetStateAction<boolean>) => void
 }
 
 const userContext = createContext({} as UserContextProps);
@@ -20,6 +22,7 @@ interface UserProviderProps {
 export function UserProvider({ user, children }: UserProviderProps) {
   const [loggedUser, setLoggedUser] = useState(user);
   const [chat, setChat] = useState<ChatContent[]>([]);
+  const [isChatFinished, setIsChatFinished] = useState(false);
 
   const handleLoggedUser = (user: string) => { setLoggedUser(user) };
 
@@ -29,7 +32,9 @@ export function UserProvider({ user, children }: UserProviderProps) {
         loggedUser,
         handleLoggedUser,
         chat,
-        setChat
+        setChat,
+        isChatFinished,
+        setIsChatFinished
       }}
     >
       {children}

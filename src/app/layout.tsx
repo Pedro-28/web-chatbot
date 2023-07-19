@@ -3,6 +3,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { ReactNode } from 'react'
+import { cookies } from 'next/headers';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -14,7 +15,6 @@ export const metadata: Metadata = {
 interface RootLayoutProps {
   children: ReactNode;
 }
-import { cookies } from 'next/headers'; // Import cookies
 
 export default async function RootLayout({ children }: RootLayoutProps) {
   const token = cookies().get('chatbot_session')?.value;

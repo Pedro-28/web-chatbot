@@ -2,11 +2,11 @@ export function getChatBotResponse(option: number, name?: string) {
   const chatBotResponses = {
     1: `Hi ${name}! I'm your chatbot assistant. What can I help you?`,
     2: 'Here are some loan options',
-    3: 'That\'s great to hear! How can I help you?',
+    3: 'Goodbye! Have a great day!',
     4: `Sure! I'm here to assist you. Please provide more details about 
     what you're looking for or how I can help you. The more information you 
     can give me, the better I can assist you.`,
-    5: 'Goodbye! Have a great day!',
+    5: 'That\'s great to hear! How can I help you?',
   }
 
   const response = chatBotResponses[option as keyof typeof chatBotResponses];
